@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Current News Anagrams</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --card: #1f2937;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #22c55e;
+      --accent2: #38bdf8;
+      --border: rgba(255,255,255,0.08);
+      --warn: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      line-height: 1.05;
+    }
+
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      max-width: 860px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 18px 0 24px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: 0.6; cursor: wait; transform: none; }
+
+    .primary { background: var(--accent); color: #052e16; }
+    .secondary { background: var(--accent2); color: #082f49; }
+
+    .status {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      color: #cbd5e1;
+      padding: 12px 14px;
+      border-radius: 14px;
+      margin-bottom: 22px;
+      min-height: 48px;
+      line-height: 1.5;
+    }
+
+    .story-card {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 22px;
+      background: rgba(17, 24, 39, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      margin-bottom: 24px;
+    }
+
+    .story-card[hidden] { display: none; }
+
+    .story-text {
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .pill {
+      display: inline-flex;
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: rgba(34, 197, 94, 0.12);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .story-title {
+      margin: 0;
+      font-size: clamp(1.35rem, 3vw, 2rem);
+      line-height: 1.2;
+    }
+
+    .story-meta {
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 0.96rem;
+    }
+
+    .story-body {
+      color: var(--text);
+      line-height: 1.8;
+      font-size: 1rem;
+      white-space: pre-wrap;
+    }
+
+    .story-link {
+      display: inline-block;
+      width: fit-content;
+      color: #7dd3fc;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .story-link:hover {
+      text-decoration: underline;
+    }
+
+    .story-image-wrap {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .story-image {
+      width: 100%;
+      max-height: 380px;
+      object-fit: cover;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .image-placeholder {
+      width: 100%;
+      min-height: 220px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      border: 1px dashed var(--border);
+      color: var(--muted);
+      text-align: center;
+      padding: 18px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: rgba(17, 24, 39, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      display: grid;
+      gap: 14px;
+    }
+
+    .anagram {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      letter-spacing: 0.22rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      min-height: 56px;
+      word-break: break-word;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.55;
+      min-height: 72px;
+    }
+
+    .answer {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fde68a;
+      min-height: 24px;
+    }
+
+    .footer {
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    code {
+      background: rgba(255,255,255,0.08);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 920px) {
+      .story-card,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="pill">No API key current news version</div>
+      <h1>Current News Anagrams</h1>
+      <p class="sub">
+        Read one current news story, look at the main image, then solve a 5-letter,
+        6-letter, and 7-letter anagram. All three answers come from the same story.
+      </p>
+    </section>
+
+    <div class="toolbar">
+      <button id="newPuzzleBtn" class="primary">Generate New Puzzle</button>
+      <button id="revealAllBtn" class="secondary">Reveal All</button>
+    </div>
+
+    <div id="status" class="status">Loading current news and building your first puzzle...</div>
+
+    <section id="storyCard" class="story-card" hidden>
+      <div class="story-text">
+        <div class="pill">Read this story first</div>
+        <h2 id="storyTitle" class="story-title"></h2>
+        <div id="storyMeta" class="story-meta"></div>
+        <div id="storyBody" class="story-body"></div>
+        <a id="storyLink" class="story-link" href="#" target="_blank" rel="noopener noreferrer">Open original story</a>
+      </div>
+      <div class="story-image-wrap" id="storyImageWrap"></div>
+    </section>
+
+    <section id="cards" class="grid"></section>
+
+    <section class="footer">
+      Sources: BBC and NPR RSS feeds, with article page extraction through
+      <code>allorigins.win</code>. Some pages may only provide a shorter summary if the
+      article parser cannot find enough text.
+    </section>
+  </div>
+
+  <script>
+    const FEEDS = [
+      { name: "BBC Top Stories", url: "https://feeds.bbci.co.uk/news/rss.xml?edition=int" },
+      { name: "BBC World", url: "https://feeds.bbci.co.uk/news/world/rss.xml?edition=uk" },
+      { name: "NPR News", url: "https://feeds.npr.org/1001/rss.xml" }
+    ];
+
+    const TARGET_LENGTHS = [5, 6, 7];
+
+    const COMMON_WORDS = new Set([
+      "about","after","again","against","among","because","before","being","below","between","could","first","found","great","group","house","local","might","never","other","people","place","right","small","sound","still","their","there","these","thing","think","those","three","today","under","using","where","which","while","would","years",
+      "across","around","become","behind","better","called","change","cities","coming","during","enough","family","former","global","having","however","inside","little","making","member","number","public","really","school","second","should","social","system","taking","within","without",
+      "another","country","current","despite","general","himself","hundred","nothing","outside","several","through","whether",
+      "bbc","npr","story","image","video","audio","news"
+    ]);
+
+    const statusEl = document.getElementById("status");
+    const cardsEl = document.getElementById("cards");
+    const newPuzzleBtn = document.getElementById("newPuzzleBtn");
+    const revealAllBtn = document.getElementById("revealAllBtn");
+
+    const storyCardEl = document.getElementById("storyCard");
+    const storyTitleEl = document.getElementById("storyTitle");
+    const storyMetaEl = document.getElementById("storyMeta");
+    const storyBodyEl = document.getElementById("storyBody");
+    const storyLinkEl = document.getElementById("storyLink");
+    const storyImageWrapEl = document.getElementById("storyImageWrap");
+
+    let currentPuzzle = [];
+    let currentStory = null;
+
+    newPuzzleBtn.addEventListener("click", buildPuzzle);
+    revealAllBtn.addEventListener("click", revealAll);
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function decodeEntities(text) {
+      const el = document.createElement("textarea");
+      el.innerHTML = text || "";
+      return el.value;
+    }
+
+    function htmlToPlainText(html) {
+      const div = document.createElement("div");
+      div.innerHTML = html || "";
+      return div.textContent || div.innerText || "";
+    }
+
+    function cleanText(text) {
+      return (text || "")
+        .replace(/\u00a0/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function clipWords(text, maxWords = 380) {
+      const words = cleanText(text).split(/\s+/).filter(Boolean);
+      if (words.length <= maxWords) return words.join(" ");
+      return words.slice(0, maxWords).join(" ") + " ...";
+    }
+
+    function tokenise(text) {
+      return cleanText(text)
+        .toLowerCase()
+        .replace(/[^a-z\s-]/g, " ")
+        .split(/\s+/)
+        .map(word => word.replace(/[^a-z]/g, ""))
+        .filter(Boolean);
+    }
+
+    function isGoodWord(word) {
+      if (!/^[a-z]+$/.test(word)) return false;
+      if (!TARGET_LENGTHS.includes(word.length)) return false;
+      if (COMMON_WORDS.has(word)) return false;
+      if (/(.)\1\1/.test(word)) return false;
+      return true;
+    }
+
+    function shuffleWord(word) {
+      const chars = word.toUpperCase().split("");
+      let scrambled = word.toUpperCase();
+      let tries = 0;
+
+      while (scrambled === word.toUpperCase() && tries < 20) {
+        const copy = [...chars];
+        for (let i = copy.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        scrambled = copy.join("");
+        tries += 1;
+      }
+
+      return scrambled;
+    }
+
+    async function fetchText(url) {
+      const proxied = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+      const response = await fetch(proxied, { cache: "no-store" });
+      if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+      return await response.text();
+    }
+
+    async function fetchFeed(feed) {
+      const xmlText = await fetchText(feed.url);
+      const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+
+      return [...xml.querySelectorAll("item")].map(item => {
+        const title = item.querySelector("title")?.textContent?.trim() || "";
+        const link = item.querySelector("link")?.textContent?.trim() || "";
+        const description = item.querySelector("description")?.textContent?.trim() || "";
+        const pubDate = item.querySelector("pubDate")?.textContent?.trim() || "";
+
+        return {
+          source: feed.name,
+          title,
+          link,
+          description: cleanText(decodeEntities(htmlToPlainText(description))),
+          pubDate
+        };
+      });
+    }
+
+    async function collectStories() {
+      const settled = await Promise.allSettled(FEEDS.map(fetchFeed));
+      const stories = [];
+      const failures = [];
+
+      settled.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          stories.push(...result.value);
+        } else {
+          failures.push(FEEDS[index].name);
+        }
+      });
+
+      return { stories, failures };
+    }
+
+    function extractMetaContent(doc, selector) {
+      return doc.querySelector(selector)?.getAttribute("content")?.trim() || "";
+    }
+
+    function extractMainImage(doc) {
+      return (
+        extractMetaContent(doc, 'meta[property="og:image"]') ||
+        extractMetaContent(doc, 'meta[name="twitter:image"]') ||
+        doc.querySelector("article img")?.src ||
+        doc.querySelector("main img")?.src ||
+        ""
+      );
+    }
+
+    function getCandidateParagraphs(doc) {
+      const selectors = [
+        "article p",
+        "main p",
+        "[role='main'] p",
+        ".story-body__inner p",
+        ".article-body p",
+        ".ArticleBody-articleBody p",
+        ".RichTextStoryBody p",
+        ".storytext p",
+        "p"
+      ];
+
+      const seen = new Set();
+      const paras = [];
+
+      for (const selector of selectors) {
+        const nodes = doc.querySelectorAll(selector);
+        for (const node of nodes) {
+          const text = cleanText(node.textContent || "");
+          if (!text || text.length < 60) continue;
+          if (seen.has(text)) continue;
+          seen.add(text);
+
+          if (
+            /cookie|privacy|newsletter|advertisement|advertising|sign up|subscribe|copyright|all rights reserved/i.test(text)
+          ) {
+            continue;
+          }
+
+          paras.push(text);
+        }
+
+        if (paras.length >= 8) break;
+      }
+
+      return paras;
+    }
+
+    async function enrichStory(story) {
+      try {
+        const html = await fetchText(story.link);
+        const doc = new DOMParser().parseFromString(html, "text/html");
+
+        const pageTitle =
+          extractMetaContent(doc, 'meta[property="og:title"]') ||
+          doc.querySelector("title")?.textContent?.trim() ||
+          story.title;
+
+        const image = extractMainImage(doc);
+
+        const paras = getCandidateParagraphs(doc);
+        const fullText = paras.length
+          ? paras.slice(0, 5).join("\n\n")
+          : story.description;
+
+        return {
+          ...story,
+          title: pageTitle || story.title,
+          image,
+          articleText: clipWords(fullText, 420),
+          rawText: fullText || story.description
+        };
+      } catch (error) {
+        return {
+          ...story,
+          image: "",
+          articleText: clipWords(story.description, 220),
+          rawText: story.description
+        };
+      }
+    }
+
+    function buildPuzzleFromStory(story) {
+      const words = shuffleArray(tokenise(`${story.title} ${story.rawText}`));
+      const selected = {};
+      const seen = new Set();
+
+      for (const word of words) {
+        if (!isGoodWord(word)) continue;
+        if (seen.has(word)) continue;
+        if (selected[word.length]) continue;
+
+        selected[word.length] = {
+          word,
+          scrambled: shuffleWord(word)
+        };
+        seen.add(word);
+      }
+
+      if (!selected[5] || !selected[6] || !selected[7]) {
+        return null;
+      }
+
+      return [selected[5], selected[6], selected[7]];
+    }
+
+    async function getUsableStory(maxTries = 12) {
+      const { stories, failures } = await collectStories();
+
+      if (!stories.length) {
+        throw new Error("No stories could be loaded.");
+      }
+
+      const shuffled = shuffleArray(
+        stories.filter(s => s.link && s.title)
+      );
+
+      for (let i = 0; i < Math.min(maxTries, shuffled.length); i++) {
+        const enriched = await enrichStory(shuffled[i]);
+
+        if (!enriched.rawText || enriched.rawText.length < 180) continue;
+
+        const puzzle = buildPuzzleFromStory(enriched);
+        if (puzzle) {
+          return { story: enriched, puzzle, failures, loadedCount: stories.length };
+        }
+      }
+
+      throw new Error("Could not find a suitable story with enough readable text.");
+    }
+
+    function renderStory(story) {
+      currentStory = story;
+
+      storyTitleEl.textContent = story.title;
+      storyMetaEl.innerHTML = `
+        <strong>Source:</strong> ${story.source}<br>
+        ${story.pubDate ? `<strong>Published:</strong> ${story.pubDate}<br>` : ""}
+        <strong>Instruction:</strong> Read the story and use it to solve the anagrams.
+      `;
+
+      storyBodyEl.textContent = story.articleText || story.description || "No article text available.";
+      storyLinkEl.href = story.link || "#";
+      storyLinkEl.style.display = story.link ? "inline-block" : "none";
+
+      if (story.image) {
+        storyImageWrapEl.innerHTML = `
+          <img class="story-image" src="${story.image}" alt="${story.title}">
+        `;
+      } else {
+        storyImageWrapEl.innerHTML = `
+          <div class="image-placeholder">
+            No main image was found for this story.
+          </div>
+        `;
+      }
+
+      storyCardEl.hidden = false;
+    }
+
+    function renderPuzzle(puzzle) {
+      cardsEl.innerHTML = "";
+
+      puzzle.forEach((entry, index) => {
+        const card = document.createElement("article");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="pill">${entry.word.length}-letter word</div>
+          <div class="anagram">${entry.scrambled}</div>
+          <div class="meta">This word appears somewhere in the story above.</div>
+          <div class="answer" id="answer-${index}">Answer hidden</div>
+          <button class="secondary" data-index="${index}">Reveal</button>
+        `;
+        cardsEl.appendChild(card);
+      });
+
+      cardsEl.querySelectorAll("button[data-index]").forEach(button => {
+        button.addEventListener("click", () => {
+          const index = Number(button.dataset.index);
+          const answerEl = document.getElementById(`answer-${index}`);
+          const item = currentPuzzle[index];
+
+          answerEl.textContent = `Answer: ${item.word.toUpperCase()}`;
+          button.textContent = "Revealed";
+          button.disabled = true;
+        });
+      });
+    }
+
+    function revealAll() {
+      currentPuzzle.forEach((item, index) => {
+        const answerEl = document.getElementById(`answer-${index}`);
+        const button = cardsEl.querySelector(`button[data-index="${index}"]`);
+
+        if (answerEl) answerEl.textContent = `Answer: ${item.word.toUpperCase()}`;
+        if (button) {
+          button.textContent = "Revealed";
+          button.disabled = true;
+        }
+      });
+    }
+
+    async function buildPuzzle() {
+      newPuzzleBtn.disabled = true;
+      revealAllBtn.disabled = true;
+      cardsEl.innerHTML = "";
+      storyCardEl.hidden = true;
+      statusEl.textContent = "Fetching current stories and building a puzzle...";
+
+      try {
+        const result = await getUsableStory();
+        currentPuzzle = result.puzzle;
+        renderStory(result.story);
+        renderPuzzle(result.puzzle);
+
+        const failureText = result.failures.length
+          ? ` Some feeds were unavailable: ${result.failures.join(", ")}.`
+          : "";
+
+        statusEl.textContent =
+          `Loaded a current story from ${result.loadedCount} feed items.${failureText}`;
+      } catch (error) {
+        statusEl.textContent = `Could not build the puzzle: ${error.message}`;
+      } finally {
+        newPuzzleBtn.disabled = false;
+        revealAllBtn.disabled = false;
+      }
+    }
+
+    buildPuzzle();
+  </script>
+</body>
+</html>
